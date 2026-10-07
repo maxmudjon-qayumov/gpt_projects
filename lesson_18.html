@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>18-dars | Pydantic v2 va Enum</title>
+<style>
+:root{--ink:#192b3b;--accent:#176b81;--paper:#f3f8fb}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.75 "Segoe UI",Arial,sans-serif}header{background:linear-gradient(125deg,#12294d,#176b81);color:white;padding:64px 24px 74px}.wrap{width:min(1060px,calc(100% - 36px));margin:auto}h1{font-size:clamp(2.2rem,6vw,3.9rem);line-height:1.12;max-width:850px;margin:18px 0}header p{max-width:760px;color:#d7f0f8}.tag{font-size:.8rem;letter-spacing:.1em;border:1px solid #8edbdc;border-radius:30px;padding:7px 13px}main{padding-bottom:40px}section,nav{background:white;border:1px solid #dce7ed;border-radius:16px;padding:30px;margin:22px 0}nav{margin-top:-25px;position:relative}h2{color:#15576c;line-height:1.3;margin:0 0 16px}h3{color:#245c78}a{color:#11647d;text-underline-offset:3px}nav a{display:inline-block;margin:5px 16px 5px 0}code{font-family:Consolas,monospace;color:#a12653;background:#f5edf1;padding:2px 5px;border-radius:4px}pre{background:#142b40;color:#e1f4ff;overflow:auto;padding:20px;border-radius:11px;font:15px/1.65 Consolas,monospace}pre code{color:inherit;background:none;padding:0}.output{background:#eaf5f0;color:#164f3e;border-left:4px solid #3a9e78}.note,.warning{padding:16px 19px;border-radius:8px;background:#eaf6f9;border-left:4px solid #3293a5}.warning{background:#fff5df;border-color:#db9e31}.table{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.95rem}th,td{padding:12px;border:1px solid #dce7ed;text-align:left;vertical-align:top}th{background:#205771;color:white}tr:nth-child(even){background:#f5f9fc}details{padding:14px 18px;background:#eff5fa;border-radius:10px;margin:12px 0}summary{cursor:pointer;font-weight:700}section{scroll-margin-top:20px}footer{text-align:center;padding:24px;color:#647c88}.meta{color:#5b7380;font-size:.95rem}li{margin:7px 0}@media(max-width:640px){section,nav{padding:20px}header{padding:45px 18px 60px}body{font-size:16px}}@media print{header{background:white;color:black;padding:10px}header p{color:black}nav{margin-top:10px}section{box-shadow:none;break-inside:auto}pre{white-space:pre-wrap;background:#f0f0f0;color:black}details>*{display:block}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><span class="tag">PYTHON BACKEND · 18-DARS</span>
+<h1>Pydantic va Enum:<br>ma’lumotni tekshirish va aniq modellashtirish</h1>
+<p>API orqali kelgan ma’lumotni ishonchli modelga aylantirish, ruxsat etilgan qiymatlarni belgilash va JSON javoblarini tayyorlash bo‘yicha amaliy qo‘llanma.</p>
+<p>Misollar: Python 3.11+ va Pydantic v2. Avval class, type hint, dict, JSON va exception mavzularini bilish foydali.</p>
+</div></header>
+<main class="wrap">
+<nav aria-label="Dars mundarijasi"><strong>Mundarija</strong><br>
+<a href="#setup">O‘rnatish</a><a href="#enum">Enum</a><a href="#model">BaseModel</a><a href="#fields">Field</a><a href="#validators">Validatorlar</a><a href="#json">JSON</a><a href="#project">Amaliy loyiha</a><a href="#quiz">Mashqlar</a>
+</nav>
+<section id="setup"><h2>1. Pydantic nima uchun kerak?</h2>
+<p>Oddiy <code>dict</code> ma’lumotni saqlaydi; masalan, <code>{"age": "salom"}</code> ham dict uchun to‘g‘ri. <strong>Pydantic</strong> esa kutilgan tuzilma va qoidalar asosida kiruvchi ma’lumotni tekshiradi, ayrim mos qiymatlarni kerakli turga aylantiradi va xatolarni tushunarli ko‘rsatadi.</p>
+<p><strong>Enum</strong> oldindan belgilangan variantlar to‘plamini nomlaydi: buyurtma holati, rol, to‘lov usuli. U Python standart kutubxonasida mavjud. Pydantic — alohida o‘rnatiladigan paket.</p>
+<pre data-lang="shell">py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install "pydantic[email]&gt;=2,&lt;3"
+.\.venv\Scripts\python.exe -c "import pydantic; print(pydantic.__version__)"</pre>
+<p><code>[email]</code> qo‘shimchasi <code>EmailStr</code> uchun kerakli email-validator paketini ham o‘rnatadi. Buyruqlarni Windows PowerShell terminalida bajaring. Barcha keyingi misollarni loyiha interpreteri bilan ishga tushiring:</p>
+<pre data-lang="shell">.\.venv\Scripts\python.exe main.py</pre>
+<div class="note">Pydantic ORM yoki database emas: ma’lumotni bazaga saqlamaydi, emailning haqiqiy egasini tekshirmaydi va foydalanuvchiga ruxsat bermaydi. Bular alohida biznes vazifalaridir.</div>
+</section>
+<section id="enum"><h2>2. Enum: nomlangan variantlar</h2>
+<p><code>Enum</code> a’zosi <strong>name</strong> (nom) va <strong>value</strong> (qiymat)ga ega. Nom kodda, qiymat esa ko‘pincha tashqi API yoki saqlash formatida ishlatiladi.</p>
+<pre data-lang="python">from enum import Enum
+
+class OrderStatus(Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+
+status = OrderStatus.PAID
+print(status.name)
+print(status.value)
+print(status == OrderStatus.PAID)
+print(status == "paid")
+print(OrderStatus("paid") is OrderStatus.PAID)
+print(OrderStatus["PAID"].value)</pre>
+<pre class="output">PAID
+paid
+True
+False
+True
+paid</pre>
+<p><code>OrderStatus("paid")</code> qiymat bo‘yicha qidiradi; <code>OrderStatus["PAID"]</code> nom bo‘yicha. Mavjud bo‘lmagan qiymat <code>ValueError</code>, mavjud bo‘lmagan nom <code>KeyError</code> beradi.</p>
+<pre data-lang="python"># Yuqoridagi OrderStatus bilan davom eting.
+for member in OrderStatus:
+    print(member.name, member.value)
+
+try:
+    OrderStatus("unknown")
+except ValueError:
+    print("Bunday buyurtma holati yo‘q")</pre>
+<p class="meta">Manba: <a href="https://docs.python.org/3/library/enum.html">Python Enum hujjatlari</a>.</p>
+</section>
+<section><h2>3. StrEnum, IntEnum, auto va unique</h2>
+<p><code>StrEnum</code> a’zolari string sifatida ham ishlaydi; Python 3.11 dan mavjud. <code>IntEnum</code> son qiymatlariga mos. Oddiy Enum bilan string/son Enumlarini aralashtirmang: tenglik xulqi farq qiladi.</p>
+<pre data-lang="python">from enum import StrEnum, IntEnum, auto, unique
+
+@unique
+class Role(StrEnum):
+    USER = "user"
+    ADMIN = "admin"
+
+class Priority(IntEnum):
+    LOW = 1
+    HIGH = 2
+
+class Mode(StrEnum):
+    READ = auto()
+    WRITE = auto()
+
+print(Role.USER == "user")  # True
+print(str(Role.ADMIN))     # admin
+print(Priority.HIGH == 2)  # True
+print(Mode.READ.value)     # read</pre>
+<p><code>@unique</code> ikki nomga bir xil qiymat berilishini rad etadi. Usiz bir xil qiymatli a’zolar alias bo‘lishi mumkin. Oddiy Enumdagi <code>auto()</code> odatda o‘suvchi son, StrEnumda kichik harfli nom beradi. API uchun barqaror qiymatlarni aniq yozish qulay.</p>
+<p>Python 3.10 uchun muqobil: <code>class Role(str, Enum): ...</code>. <code>Flag</code>/<code>IntFlag</code> bitli kombinatsiyalar uchun ishlatiladi; oddiy bitta holat tanlash uchun Enum yetarli.</p>
+<h3>Shart va match bilan</h3>
+<pre data-lang="python"># Yuqoridagi Role bilan davom eting.
+role = Role("admin")
+if role == Role.ADMIN:
+    print("Admin roli tanlandi")
+
+match role:
+    case Role.ADMIN:
+        print("Admin menyusi")
+    case Role.USER:
+        print("Foydalanuvchi menyusi")</pre>
+<div class="warning">Requestda <code>"admin"</code> to‘g‘ri Enum qiymati bo‘lishi uning egasiga admin huquqi berilganini anglatmaydi. Huquqlarni autentifikatsiya qilingan foydalanuvchi va server qoidalari belgilaydi.</div>
+</section>
+<section id="model"><h2>4. Birinchi BaseModel</h2>
+<p>Pydanticda class <code>BaseModel</code>dan meros oladi. Attribute annotatsiyalari maydonlarning turini belgilaydi. Bu oddiy type hintdan farqli ravishda model yaratish vaqtida ishlaydi.</p>
+<pre data-lang="python">from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    username: str
+    active: bool = True
+
+user = User(id="12", username="ali")
+print(user.id, type(user.id).__name__)
+print(user.active)
+print(user.model_dump())</pre>
+<pre class="output">12 int
+True
+{'id': 12, 'username': 'ali', 'active': True}</pre>
+<p><code>"12"</code> standart rejimda <code>12</code>ga aylantirildi; bu coercion deyiladi. Har qanday noto‘g‘ri tur avtomatik to‘g‘rilanmaydi: masalan, <code>"abc"</code> int bo‘la olmaydi.</p>
+<p class="meta">Manba: <a href="https://docs.pydantic.dev/latest/concepts/models/">Pydantic model qo‘llanmasi</a>.</p>
+</section>
+<section><h2>5. Majburiy maydon, default va None farqi</h2>
+<div class="table"><table><tr><th>Yozilishi</th><th>Berish majburiymi?</th><th>None mumkinmi?</th></tr>
+<tr><td><code>name: str</code></td><td>Ha</td><td>Yo‘q</td></tr>
+<tr><td><code>name: str = "Mehmon"</code></td><td>Yo‘q</td><td>Yo‘q</td></tr>
+<tr><td><code>name: str | None</code></td><td>Ha</td><td>Ha</td></tr>
+<tr><td><code>name: str | None = None</code></td><td>Yo‘q</td><td>Ha</td></tr></table></div>
+<p>Pydantic v2 da <code>Optional[str]</code> ham <code>str | None</code> bilan bir ma’noli: maydonni tashlab ketish uchun default ham kerak.</p>
+<pre data-lang="python">from pydantic import BaseModel, Field
+
+class Profile(BaseModel):
+    username: str
+    bio: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+a = Profile(username="ali")
+b = Profile(username="lola")
+a.tags.append("python")
+print(a.tags)  # ['python']
+print(b.tags)  # []</pre>
+<p><code>default_factory</code> har model uchun yangi qiymat yaratadi. Default qiymatlar odatda validatsiyadan o‘tmaydi; kerak bo‘lsa <code>Field(default=..., validate_default=True)</code> ishlating.</p>
+</section>
+<section id="fields"><h2>6. Field va Annotated bilan cheklovlar</h2>
+<div class="table"><table><tr><th>Cheklov</th><th>Ma’nosi</th></tr>
+<tr><td><code>gt / ge</code></td><td>Katta / katta yoki teng</td></tr>
+<tr><td><code>lt / le</code></td><td>Kichik / kichik yoki teng</td></tr>
+<tr><td><code>min_length / max_length</code></td><td>Matn yoki kolleksiya uzunligi</td></tr>
+<tr><td><code>pattern</code></td><td>Matn uchun regex qoidasi</td></tr>
+<tr><td><code>description</code></td><td>JSON Schema uchun izoh, cheklov emas</td></tr></table></div>
+<pre data-lang="python">from typing import Annotated
+from pydantic import BaseModel, Field, EmailStr, ValidationError
+
+Age = Annotated[int, Field(ge=0, le=120)]
+
+class Signup(BaseModel):
+    username: str = Field(min_length=3, max_length=20,
+                          pattern=r"^[a-z][a-z0-9_]*$")
+    email: EmailStr
+    age: Age
+
+ok = Signup(username="ali_dev", email="ali@example.com", age=21)
+print(ok.age)  # 21
+
+try:
+    Signup(username="X", email="bad", age=-1)
+except ValidationError as exc:
+    for error in exc.errors(include_input=False, include_url=False):
+        print(error["loc"], error["type"])</pre>
+<p>Uch maydon xatosi yig‘iladi: username qisqa, email noto‘g‘ri, age manfiy. Aniq xabar matni versiyaga qarab farqlanishi mumkin.</p>
+<p><code>UUID</code>, <code>datetime</code>, <code>Decimal</code>, <code>HttpUrl</code>, <code>PositiveInt</code>, <code>SecretStr</code> ham foydali turlardir. <code>SecretStr</code> ko‘rsatishda qiymatni niqoblaydi; shifrlash yoki parol hashingi o‘rnini bosmaydi.</p>
+</section>
+<section><h2>7. ValidationErrorni tushunish</h2>
+<p><code>errors()</code> xatolar ro‘yxatini qaytaradi. <code>loc</code> — maydon yo‘li, <code>type</code> — xato kodi, <code>msg</code> — tushuntirish. Nested listda yo‘l masalan <code>("items", 0, "quantity")</code> bo‘lishi mumkin.</p>
+<pre data-lang="python">from pydantic import BaseModel, ValidationError
+
+class Quantity(BaseModel):
+    value: int
+
+try:
+    Quantity.model_validate({"value": "abc"})
+except ValidationError as exc:
+    print(exc.error_count())  # 1
+    err = exc.errors(include_input=False, include_url=False)[0]
+    print(err["loc"])         # ('value',)
+    print(err["type"])        # int_parsing</pre>
+<div class="note">Xato ichidagi <code>input</code> foydalanuvchi yuborgan ma’lumotni saqlashi mumkin. Parol/token qatnashgan requestlarni to‘liq logga chiqarmang. Tashqi javobni <code>loc</code>, <code>type</code> va xavfsiz xabardan yig‘ing.</div>
+</section>
+<section><h2>8. Strict mode va ConfigDict</h2>
+<pre data-lang="python">from pydantic import BaseModel, ConfigDict, ValidationError
+
+class Stock(BaseModel):
+    model_config = ConfigDict(
+        strict=True,
+        extra="forbid",
+        validate_assignment=True,
+    )
+    quantity: int
+
+stock = Stock(quantity=3)
+try:
+    stock.quantity = "4"
+except ValidationError:
+    print("quantity int bo‘lishi kerak")
+
+try:
+    Stock(quantity=3, unknown=10)
+except ValidationError:
+    print("Ortiqcha maydon rad etildi")</pre>
+<p><code>strict=True</code> tur aylantirishni cheklaydi. Model bo‘yicha, <code>Field(strict=True)</code> orqali bitta maydonda yoki <code>model_validate(data, strict=True)</code> chaqiruvida qo‘llanadi. JSONda mavjud bo‘lmagan turlar (masalan, sana) uchun ayrim qoidalar Python obyekt validatsiyasidan farqlanishi mumkin.</p>
+<p><code>extra</code> qiymatlari: <code>"ignore"</code> — standart, ortiqcha maydonni tashlaydi; <code>"forbid"</code> — xato; <code>"allow"</code> — saqlaydi. <code>frozen=True</code> attribute qayta berilishini to‘sadi, ammo nested listni chuqur muzlatmaydi. <code>validate_assignment</code> ham <code>list.append()</code>ni avtomatik tekshirmaydi.</p>
+</section>
+<section id="validators"><h2>9. field_validator: bitta maydon qoidasi</h2>
+<p><code>mode="before"</code> xom qiymat bilan, <code>mode="after"</code> (standart) type validatsiyasidan keyin ishlaydi. Validator yakunda qiymatni <code>return</code> qilishi kerak.</p>
+<pre data-lang="python">from pydantic import BaseModel, field_validator, ValidationError
+
+class Account(BaseModel):
+    username: str
+
+    @field_validator("username", mode="before")
+    @classmethod
+    def normalize(cls, value):
+        if isinstance(value, str):
+            return value.strip().lower()
+        return value
+
+    @field_validator("username")
+    @classmethod
+    def reject_reserved(cls, value: str) -&gt; str:
+        if value in {"admin", "root"}:
+            raise ValueError("Bu username band")
+        return value
+
+print(Account(username="  ALI  ").username)  # ali
+try:
+    Account(username="ADMIN")
+except ValidationError:
+    print("Bu username ruxsat etilmagan")</pre>
+<p><code>ValueError</code> validatsiya xatosiga o‘raladi. V2 da validator ichidagi <code>TypeError</code> avtomatik ValidationErrorga aylantirilmaydi; uni oddiy validatsiya xabari sifatida ishlatmang. Murakkab holatlar uchun <code>wrap</code> va <code>plain</code> validatorlari bor; <code>plain</code> standart type tekshiruvini chetlab o‘tishi mumkin.</p>
+<p class="meta">Manba: <a href="https://docs.pydantic.dev/latest/concepts/validators/">Validatorlar qo‘llanmasi</a>.</p>
+</section>
+<section><h2>10. model_validator: maydonlararo qoida</h2>
+<pre data-lang="python">from typing import Self
+from pydantic import BaseModel, model_validator, ValidationError
+
+class Period(BaseModel):
+    start: int
+    end: int
+
+    @model_validator(mode="after")
+    def check_order(self) -&gt; Self:
+        if self.end &lt; self.start:
+            raise ValueError("end startdan kichik bo‘lmasin")
+        return self
+
+print(Period(start=2, end=5).model_dump())
+try:
+    Period(start=5, end=2)
+except ValidationError:
+    print("Davr noto‘g‘ri")</pre>
+<pre class="output">{'start': 2, 'end': 5}
+Davr noto‘g‘ri</pre>
+<p>Bu qoida sana oralig‘i, narx chegarasi yoki o‘zaro bog‘liq maydonlar uchun foydali. Modelning <code>after</code> validatori <code>self</code>ni qaytaradi.</p>
+</section>
+<section><h2>11. Nested modellar va kolleksiyalar</h2>
+<pre data-lang="python">from pydantic import BaseModel, Field
+
+class Address(BaseModel):
+    city: str
+    postal_code: str
+
+class Customer(BaseModel):
+    name: str
+    address: Address
+    tags: list[str] = Field(default_factory=list)
+    scores: dict[str, int] = Field(default_factory=dict)
+
+customer = Customer.model_validate({
+    "name": "Lola",
+    "address": {"city": "Buxoro", "postal_code": "200100"},
+    "tags": ["python"],
+    "scores": {"math": "90"}
+})
+print(customer.address.city)  # Buxoro
+print(customer.scores)        # {'math': 90}</pre>
+<p><code>list[Model]</code> har elementni alohida tekshiradi. <code>tuple[int, str]</code> ikki pozitsiya turini, <code>set[str]</code> noyob matnlar to‘plamini ifodalaydi. JSONdagi set odatda arrayga aylanadi; tartibga tayanmang. <code>Any</code> turga oid tekshiruvni keng ochib yuboradi.</p>
+</section>
+<section><h2>12. Enumni Pydantic bilan birlashtirish</h2>
+<pre data-lang="python">from enum import StrEnum
+from pydantic import BaseModel, ValidationError
+
+class Status(StrEnum):
+    PENDING = "pending"
+    PAID = "paid"
+
+class Order(BaseModel):
+    id: int
+    status: Status = Status.PENDING
+
+order = Order(id=7, status="paid")
+print(order.status is Status.PAID)       # True
+print(order.model_dump(mode="json"))     # {'id': 7, 'status': 'paid'}
+
+try:
+    Order(id=8, status="unknown")
+except ValidationError as exc:
+    print(exc.errors()[0]["type"])       # enum</pre>
+<p>Standart rejimda qiymat Enum a’zosiga aylantiriladi. Strict Python kirishida Enum instance talab qilinishi mumkin. <code>use_enum_values=True</code> modelda a’zo o‘rniga uning qiymatini saqlashga olib keladi; default Enum uchun <code>validate_default=True</code> kerak bo‘lishi mumkin. Ko‘pincha modelda Enumni saqlab, JSON chiqarishda serializatsiya qilish yetarli.</p>
+<h3>Enum yoki Literal?</h3>
+<p><code>Literal["asc", "desc"]</code> kichik, bir joyda ishlatiladigan variantlar uchun qulay. Enum ko‘p modelda qayta ishlatiladigan, nomlangan holatlar uchun qulay. Ikkalasi ham database qiymatlarini o‘z-o‘zidan yangilamaydi.</p>
+</section>
+<section id="json"><h2>13. JSON va model metodlari</h2>
+<div class="table"><table><tr><th>Metod</th><th>Vazifasi</th></tr>
+<tr><td><code>Model.model_validate(data)</code></td><td>Python ma’lumotidan model yaratish</td></tr>
+<tr><td><code>Model.model_validate_json(text)</code></td><td>JSON matndan model yaratish</td></tr>
+<tr><td><code>model.model_dump()</code></td><td>Python dict; ayrim qiymatlar Python obyekt bo‘lib qoladi</td></tr>
+<tr><td><code>model.model_dump(mode="json")</code></td><td>JSONga mos qiymatlar bilan dict</td></tr>
+<tr><td><code>model.model_dump_json()</code></td><td>JSON string</td></tr>
+<tr><td><code>Model.model_json_schema()</code></td><td>Maydonlar va cheklovlar tavsifi</td></tr></table></div>
+<pre data-lang="python">from datetime import datetime
+from pydantic import BaseModel
+
+class Event(BaseModel):
+    name: str
+    created_at: datetime
+
+event = Event.model_validate_json(
+    '{"name":"login","created_at":"2026-09-30T10:00:00Z"}'
+)
+print(type(event.model_dump()["created_at"]).__name__)  # datetime
+print(type(event.model_dump(mode="json")["created_at"]).__name__)  # str
+print(type(event.model_dump_json()).__name__)  # str</pre>
+<p><code>exclude_none=True</code> None maydonlarni olib tashlaydi. <code>exclude_unset=True</code> foydalanuvchi bermagan maydonlarni chiqarishdan chetlatadi — PATCH so‘rovda foydali. <code>exclude={"password"}</code> ayrim maydonlarni yashiradi.</p>
+<div class="warning"><code>model_construct()</code> validatsiyani chetlab o‘tadi. <code>model_copy(update=...)</code> ham update qiymatlarini tekshirmaydi. Tashqi ma’lumot uchun qaytadan <code>model_validate()</code> chaqiring.</div>
+<p class="meta">Manba: <a href="https://docs.pydantic.dev/latest/concepts/serialization/">Pydantic serializatsiya hujjatlari</a>.</p>
+</section>
+<section><h2>14. Alias, ORM obyektlari va TypeAdapter</h2>
+<pre data-lang="python">from pydantic import BaseModel, Field, TypeAdapter
+
+class PublicUser(BaseModel):
+    user_id: int = Field(alias="userId")
+
+user = PublicUser.model_validate({"userId": 12})
+print(user.user_id)                          # 12
+print(user.model_dump(by_alias=True))        # {'userId': 12}
+
+adapter = TypeAdapter(list[int])
+print(adapter.validate_python(["1", "2"]))   # [1, 2]</pre>
+<p><code>validation_alias</code> kirish nomi, <code>serialization_alias</code> chiqish nomi uchun alohida ishlatiladi. Oddiy <code>alias</code> ikkala yo‘nalishga xizmat qiladi; alias bilan chiqarish uchun <code>by_alias=True</code>ni aniq bering.</p>
+<p><code>ConfigDict(from_attributes=True)</code> dict o‘rniga obyekt attributelaridan model o‘qishga imkon beradi. ORM obyekt bilan ishlaganda kerakli attributelar oldindan yuklangan bo‘lsin. <code>TypeAdapter</code> class yozmasdan <code>list[User]</code> kabi turlarni tekshiradi; <code>RootModel</code> esa ildizi list yoki boshqa qiymat bo‘lgan model yaratadi.</p>
+</section>
+<section><h2>15. Pydantic v1 va v2 farqi</h2>
+<div class="table"><table><tr><th>Eski qo‘llanmada</th><th>Ushbu darsda (v2)</th></tr>
+<tr><td><code>.dict()</code></td><td><code>.model_dump()</code></td></tr>
+<tr><td><code>.json()</code></td><td><code>.model_dump_json()</code></td></tr>
+<tr><td><code>.parse_obj()</code></td><td><code>.model_validate()</code></td></tr>
+<tr><td><code>@validator</code></td><td><code>@field_validator</code></td></tr>
+<tr><td><code>@root_validator</code></td><td><code>@model_validator</code></td></tr>
+<tr><td><code>class Config</code></td><td><code>model_config = ConfigDict(...)</code></td></tr>
+<tr><td><code>orm_mode=True</code></td><td><code>from_attributes=True</code></td></tr>
+<tr><td>Pydanticdagi BaseSettings</td><td>Alohida <code>pydantic-settings</code> paketi</td></tr></table></div>
+<p>Bular nom almashtirish bilangina cheklanmaydi: validator signaturalari va ayrim tur qoidalari ham farq qiladi. Yangi loyiha uchun bitta major versiya sintaksisiga rioya qiling.</p>
+</section>
+<section id="project"><h2>16. To‘liq mini loyiha: buyurtma tekshirish</h2>
+<p>Quyidagi kod mustaqil ishlaydi. Xaridor emaili, mahsulot miqdori, narx, buyurtma holati, noyob SKU va umumiy narxni tekshiradi. Narx JSONga string bo‘lib chiqariladi — bu shartnoma frontend bilan kelishilgan bo‘lishi kerak.</p>
+<pre data-lang="python" id="project-code">from decimal import Decimal
+from enum import StrEnum
+from typing import Self
+from pydantic import (
+    BaseModel, ConfigDict, EmailStr, Field,
+    ValidationError, model_validator,
+)
+
+class OrderStatus(StrEnum):
+    PENDING = "pending"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+
+class Item(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    sku: str = Field(min_length=1)
+    quantity: int = Field(gt=0, le=100)
+    unit_price: Decimal = Field(
+        gt=0, max_digits=10, decimal_places=2, allow_inf_nan=False
+    )
+
+class OrderCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    customer_email: EmailStr
+    items: list[Item] = Field(min_length=1, max_length=50)
+    note: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def unique_skus(self) -&gt; Self:
+        skus = [item.sku for item in self.items]
+        if len(skus) != len(set(skus)):
+            raise ValueError("SKU takrorlanmasin")
+        return self
+
+class OrderResponse(BaseModel):
+    id: int
+    status: OrderStatus
+    total: Decimal
+
+def preview_order(payload: dict) -&gt; dict:
+    try:
+        order = OrderCreate.model_validate(payload)
+    except ValidationError as exc:
+        return {
+            "success": False,
+            "errors": [
+                {"field": ".".join(map(str, error["loc"])),
+                 "code": error["type"]}
+                for error in exc.errors(include_input=False)
+            ],
+        }
+
+    total = sum(
+        (item.unit_price * item.quantity for item in order.items),
+        start=Decimal("0"),
+    )
+    response = OrderResponse(
+        id=1, status=OrderStatus.PENDING, total=total
+    )
+    return {"success": True, "data": response.model_dump(mode="json")}
+
+payload = {
+    "customer_email": "ali@example.com",
+    "items": [
+        {"sku": "BOOK", "quantity": 2, "unit_price": "25.50"},
+        {"sku": "PEN", "quantity": 1, "unit_price": "3.00"},
+    ],
+}
+print(preview_order(payload))
+print(preview_order({"customer_email": "bad", "items": []}))</pre>
+<pre class="output">{'success': True, 'data': {'id': 1, 'status': 'pending', 'total': '54.00'}}
+{'success': False, 'errors': [
+    {'field': 'customer_email', 'code': 'value_error'},
+    {'field': 'items', 'code': 'too_short'}
+]}</pre>
+<p>Ikkinchi natija o‘qish uchun bir nechta qatorga yoyilgan. Demo <code>id=1</code> ishlatadi; real tizimda IDni database yaratadi. Productionda <code>unit_price</code>ni mijoz requestidan emas, server katalogidan oling; mijoz narxni o‘zgartira olmasligi kerak. <code>PAID</code> holatini ham server tasdiqlangan to‘lov asosida belgilaydi.</p>
+</section>
+<section><h2>17. FastAPI bilan request va response</h2>
+<p>Bu qo‘shimcha misol oldingi loyiha modellari bilan bitta <code>main.py</code> faylida ishlatiladi. FastAPI alohida o‘rnatiladi.</p>
+<pre data-lang="shell">.\.venv\Scripts\python.exe -m pip install fastapi uvicorn
+.\.venv\Scripts\python.exe -m uvicorn main:app --reload</pre>
+<pre data-lang="python"># Oldingi loyiha kodidagi OrderCreate, OrderResponse,
+# OrderStatus va Decimal kerak.
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/orders/preview", response_model=OrderResponse)
+def preview(order: OrderCreate):
+    total = sum(
+        (item.unit_price * item.quantity for item in order.items),
+        start=Decimal("0"),
+    )
+    return OrderResponse(id=1, status=OrderStatus.PENDING, total=total)</pre>
+<p>Brauzerda <code>http://127.0.0.1:8000/docs</code> orqali sinang. Noto‘g‘ri request standart holatda 422 javob oladi. Bu endpoint faqat hisoblaydi, buyurtmani bazaga saqlamaydi. Response modeli tashqariga qaysi maydonlar chiqarilishini aniq belgilaydi.</p>
+</section>
+<section id="quiz"><h2>18. Mashqlar, xatolar va bilimni tekshirish</h2>
+<ol>
+<li><code>Priority</code> Enum: low, normal, high. <code>TaskCreate</code> modeliga title (3–100 belgi), priority va optional deadline qo‘shing.</li>
+<li>Title bosh-oxiridagi bo‘sh joylarni olib tashlang; bo‘sh natijani rad eting.</li>
+<li>Buyurtma loyihasini quantity=0, manfiy narx, bir xil SKU va ortiqcha maydon bilan sinang. Xato joylarini yozib chiqing.</li>
+<li>Yaroqli modelni JSONga chiqaring va qayta o‘qing. <code>Decimal</code> hamda Enum turlarini tekshiring.</li>
+</ol>
+<details><summary>Enum validatsiyasi ruxsat nazoratini ham bajaradimi?</summary><p>Yo‘q. U faqat ruxsat etilgan variantlardan biri kelganini tekshiradi. Foydalanuvchi aynan shu amalni bajarishga haqlimi — alohida tekshiruv.</p></details>
+<details><summary>str | None maydonini berish majburiy bo‘lishi mumkinmi?</summary><p>Ha. Default bo‘lmasa, kalit majburiy, qiymati esa None bo‘lishi mumkin. <code>= None</code> qo‘shilsa kalitni tashlab ketish mumkin.</p></details>
+<details><summary>model_dump() va model_dump_json() farqi?</summary><p>Birinchisi dict, ikkinchisi JSON string. JSONga mos dict uchun <code>model_dump(mode="json")</code> kerak.</p></details>
+<details><summary>Validator return qilmasa nima bo‘ladi?</summary><p>Python None qaytaradi. Bu kutilmagan natija yoki keyingi xatoga sabab bo‘ladi. Valid qiymatni, model validatorida esa selfni qaytaring.</p></details>
+<details><summary>Amaliy yechim: TaskCreate</summary><pre data-lang="python">from datetime import datetime
+from enum import StrEnum
+from pydantic import BaseModel, Field, field_validator
+
+class Priority(StrEnum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+
+class TaskCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=100)
+    priority: Priority = Priority.NORMAL
+    deadline: datetime | None = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def trim_title(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+task = TaskCreate(title="  Python darsi  ", priority="high")
+print(task.title)           # Python darsi
+print(task.priority.value) # high</pre></details>
+</section>
+<section><h2>19. Rasmiy qo‘llanmalar</h2>
+<ul>
+<li><a href="https://docs.python.org/3/library/enum.html">Python: Enum, StrEnum, IntEnum</a></li>
+<li><a href="https://docs.pydantic.dev/latest/concepts/models/">Pydantic: modellar</a></li>
+<li><a href="https://docs.pydantic.dev/latest/concepts/fields/">Maydonlar va default qiymatlar</a></li>
+<li><a href="https://docs.pydantic.dev/latest/concepts/validators/">Field va model validatorlari</a></li>
+<li><a href="https://docs.pydantic.dev/latest/concepts/serialization/">Serializatsiya</a></li>
+<li><a href="https://docs.pydantic.dev/latest/concepts/strict_mode/">Strict mode</a></li>
+<li><a href="https://docs.pydantic.dev/latest/migration/">V1 dan v2 ga o‘tish</a></li>
+<li><a href="https://fastapi.tiangolo.com/tutorial/body/">FastAPI: request body modellari</a></li>
+</ul>
+</section>
+</main><footer><a href="lesson_17.html">← 17-dars</a> · 18-dars: Pydantic v2 va Enum · Mustaqil, offline o‘qiladigan qo‘llanma</footer>
+</body></html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1-dars | IT va Python asoslari</title>
+  <style>
+    :root { --navy:#0b1830; --blue:#2563eb; --cyan:#06b6d4; --paper:#f7f9fc; --ink:#172033; --muted:#5c6980; --green:#0f9f6e; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,Segoe UI,Arial,sans-serif; color:var(--ink); background:var(--paper); line-height:1.65; }
+    header { color:#fff; padding:70px 24px 78px; background:radial-gradient(circle at 80% 20%, #1a8db8 0, transparent 28%), linear-gradient(135deg,#081427,#173d78); }
+    .wrap { width:min(960px, calc(100% - 40px)); margin:auto; }
+    .tag { display:inline-block; border:1px solid #62d3ef; color:#9cecff; padding:5px 12px; border-radius:999px; font-size:.84rem; font-weight:700; letter-spacing:.04em; }
+    h1 { font-size:clamp(2.2rem, 6vw, 4.2rem); line-height:1.08; margin:18px 0 16px; max-width:760px; }
+    header p { max-width:650px; color:#d5e5ff; font-size:1.1rem; margin:0; }
+    main { margin-top:-35px; padding-bottom:60px; }
+    .intro, section { background:#fff; border:1px solid #e4e9f2; border-radius:18px; padding:30px; margin:22px 0; box-shadow:0 10px 25px rgba(21,44,82,.06); }
+    .intro { border-left:6px solid var(--cyan); }
+    h2 { font-size:1.65rem; line-height:1.2; margin:0 0 14px; color:#102a50; }
+    h3 { margin:0 0 8px; color:#163867; }
+    .lead { font-size:1.08rem; color:var(--muted); }
+    .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px; }
+    .card { padding:20px; border-radius:13px; background:#f5f9ff; border:1px solid #deebfb; }
+    .card .icon { font-size:1.8rem; display:block; margin-bottom:8px; }
+    .flow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:22px 0 4px; font-weight:700; color:#264871; }
+    .flow span { background:#e8f3ff; padding:8px 13px; border-radius:9px; }.flow b { color:var(--cyan); font-size:1.35rem; }
+    .note { background:#ecfdf5; border-left:5px solid var(--green); border-radius:8px; padding:14px 17px; margin:18px 0 0; }
+    .warning { background:#fff7e8; border-left:5px solid #f59e0b; border-radius:8px; padding:14px 17px; margin:18px 0; }
+    ol { padding-left:23px; } li { margin:9px 0; }
+    code { background:#eaf0f8; color:#b42352; padding:2px 5px; border-radius:4px; font-family:Consolas,monospace; }
+    pre { background:#101c31; color:#d9f5ff; border-radius:12px; padding:21px; overflow:auto; font:1rem/1.65 Consolas,"Courier New",monospace; box-shadow:inset 0 0 0 1px #2a4064; }
+    .code-label { color:#7ee6ff; font:700 .76rem Arial,sans-serif; letter-spacing:.09em; margin:18px 0 -11px 14px; position:relative; z-index:1; }
+    .steps { counter-reset:step; padding:0; list-style:none; }.steps li { position:relative; padding:12px 12px 12px 55px; background:#f7faff; border-radius:10px; margin:10px 0; }.steps li::before { counter-increment:step; content:counter(step); position:absolute; left:15px; top:11px; width:27px; height:27px; text-align:center; line-height:27px; border-radius:50%; background:var(--blue); color:#fff; font-weight:bold; }
+    .quiz { background:#102a50; color:#eff8ff; }.quiz h2 { color:#fff; }.quiz p { color:#c7dbed; }.answer { display:none; padding:12px; margin-top:12px; border-radius:8px; background:#1c4a68; }.quiz button { border:0; padding:10px 16px; cursor:pointer; border-radius:8px; background:#5ee3f7; color:#063249; font-weight:800; }
+    footer { text-align:center; color:#77849a; font-size:.9rem; padding:10px; }
+    @media (max-width:650px) { .grid { grid-template-columns:1fr; } header { padding-top:48px; } .intro, section { padding:22px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <span class="tag">BOSHLANG‘ICH DARAJA · 1-DARS</span>
+      <h1>IT olamiga ilk qadam va Python bilan tanishuv</h1>
+      <p>Bu darsda kompyuter qanday ishlashi, dasturlar nima ekanligi va Python’da birinchi kodni yozishni o‘rganamiz.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="intro">
+      <h2>Dars maqsadi</h2>
+      <p class="lead">Dars oxirida siz IT, hardware, software va dasturlash tili tushunchalarini farqlay olasiz; PyCharm’ni o‘rnatasiz hamda ilk Python dasturingizni ishga tushirasiz.</p>
+    </div>
+
+    <section>
+      <h2>1. IT nima?</h2>
+      <p><strong>IT</strong> — <em>Information Technology</em>, ya’ni <strong>axborot texnologiyalari</strong> degani. IT yordamida ma’lumotlarni yaratamiz, saqlaymiz, qayta ishlaymiz va internet orqali ulashamiz.</p>
+      <div class="flow"><span>Ma’lumot</span><b>→</b><span>Kompyuter</span><b>→</b><span>Dastur</span><b>→</b><span>Natija</span></div>
+      <p>Masalan, telefoningizdagi Telegram, bank ilovasi, veb-saytlar va o‘yinlarning barchasi IT mahsulotidir.</p>
+    </section>
+
+    <section>
+      <h2>2. Hardware va Software</h2>
+      <p class="lead">Kompyuterni ikki katta qismga ajratish mumkin: ushlab ko‘rish mumkin bo‘lgan qurilmalar va ularni boshqaradigan dasturlar.</p>
+      <div class="grid">
+        <div class="card"><span class="icon">🖥️</span><h3>Hardware — qurilma qismi</h3><p>Ko‘rish va ushlash mumkin bo‘lgan jismoniy qismlar. Masalan: monitor, klaviatura, sichqoncha, protsessor, xotira (RAM), qattiq disk.</p></div>
+        <div class="card"><span class="icon">💿</span><h3>Software — dasturiy qism</h3><p>Kompyuterga nima qilishni buyuradigan dasturlar. Masalan: Windows, Chrome, Word, Telegram, o‘yinlar va Python dasturlari.</p></div>
+      </div>
+      <div class="note"><strong>Esda tuting:</strong> hardware — tanasi, software esa uning “aqli” yoki ko‘rsatmalaridir. Ikkalasi birgalikda ishlaydi.</div>
+    </section>
+
+    <section>
+      <h2>3. Dasturlash tili nima?</h2>
+      <p><strong>Dasturlash tili</strong> — dasturchi kompyuterga aniq buyruqlar yozishi uchun ishlatiladigan til. Kompyuter faqat juda aniq ko‘rsatmalarni bajaradi, shuning uchun kod yozish qoidalariga amal qilinadi.</p>
+      <div class="grid">
+        <div class="card"><h3>Inson yozadi</h3><p>Dasturchi kod yozadi: <code>print("Salom")</code></p></div>
+        <div class="card"><h3>Kompyuter bajaradi</h3><p>Python kodni tushunib, ekranga <strong>Salom</strong> so‘zini chiqaradi.</p></div>
+      </div>
+      <p>Mashhur dasturlash tillari: <strong>Python, JavaScript, Java, C++, C#</strong>. Ularning har biri turli vazifalarda qo‘llanadi.</p>
+    </section>
+
+    <section>
+      <h2>4. Nega Python?</h2>
+      <p><strong>Python</strong> — o‘rganishga qulay, sodda va juda mashhur dasturlash tili. Uning kodlari inson tiliga yaqin bo‘lgani uchun yangi boshlovchilar uchun ayni muddao.</p>
+      <div class="grid">
+        <div class="card"><h3>Qayerda ishlatiladi?</h3><p>Veb-saytlar, Telegram botlar, sun’iy intellekt, ma’lumotlar tahlili, avtomatlashtirish va o‘yinlarda.</p></div>
+        <div class="card"><h3>Afzalligi</h3><p>Yozilishi oson, katta hamjamiyatga ega va ko‘plab tayyor kutubxonalari mavjud.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. PyCharm nima?</h2>
+      <p><strong>PyCharm</strong> — Python kodlarini yozish, tekshirish va ishga tushirish uchun yaratilgan dastur. Bunday dastur <strong>IDE</strong> (<em>Integrated Development Environment</em>) deb ataladi.</p>
+      <p>PyCharm koddagi xatolarni ko‘rsatadi, fayllarni tartiblaydi va dasturni ishga tushirishni osonlashtiradi.</p>
+      <div class="warning"><strong>Muhim:</strong> PyCharm kod yozish muhiti, Python esa kodni bajaradigan dasturlash tili. Ikkalasini ham o‘rnatish kerak.</div>
+    </section>
+
+    <section>
+      <h2>6. Python va PyCharm o‘rnatish</h2>
+      <h3>A. Python’ni o‘rnatish</h3>
+      <ol class="steps">
+        <li>Brauzerda <code>python.org/downloads</code> saytini oching.</li>
+        <li><strong>Download Python</strong> tugmasini bosing va yuklangan faylni ishga tushiring.</li>
+        <li>Eng pastdagi <strong>Add Python to PATH</strong> belgisini albatta qo‘ying.</li>
+        <li><strong>Install Now</strong> tugmasini bosing va o‘rnatish tugashini kuting.</li>
+      </ol>
+      <h3>B. PyCharm Community’ni o‘rnatish</h3>
+      <ol class="steps">
+        <li><code>jetbrains.com/pycharm/download</code> saytiga kiring.</li>
+        <li><strong>Community Edition</strong> (bepul) versiyasini yuklab oling.</li>
+        <li>O‘rnatish faylini oching va odatiy sozlamalar bilan davom eting.</li>
+        <li>PyCharm’ni oching, <strong>New Project</strong> tugmasini bosing va Python Interpreter tanlanganini tekshiring.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>7. Birinchi dastur: Hello, World!</h2>
+      <p>Yangi loyiha ichida <strong>main.py</strong> nomli fayl yarating. So‘ng quyidagi kodni yozing:</p>
+      <div class="code-label">main.py</div>
+      <pre>print("Hello, World!")</pre>
+      <p><code>print()</code> — ekranga ma’lumot chiqarish buyrug‘i. Qo‘shtirnoq ichidagi matn aynan ekranga chiqadi.</p>
+      <ol class="steps">
+        <li>Kodni saqlang: <code>Ctrl + S</code>.</li>
+        <li>Fayl ichida sichqonchaning o‘ng tugmasini bosing.</li>
+        <li><strong>Run 'main'</strong> bandini tanlang yoki yuqoridagi yashil ▶ tugmani bosing.</li>
+        <li>Pastdagi konsolda <code>Hello, World!</code> yozuvi paydo bo‘ladi.</li>
+      </ol>
+      <div class="note"><strong>Tabriklaymiz!</strong> Siz ilk Python dasturingizni yozdingiz va ishga tushirdingiz.</div>
+    </section>
+
+    <section class="quiz">
+      <h2>O‘zingizni tekshiring</h2>
+      <p><strong>Savol:</strong> Klaviatura hardware’mi yoki software? <br><strong>Savol:</strong> <code>print()</code> buyrug‘i nima qiladi?</p>
+      <button onclick="document.getElementById('answer').style.display='block'">Javobni ko‘rish</button>
+      <div class="answer" id="answer">Klaviatura — <strong>hardware</strong>, chunki u jismoniy qurilma. <code>print()</code> esa ekranga matn yoki qiymat chiqaradi.</div>
+    </section>
+  </main>
+  <footer>1-dars · IT va Python asoslari · Keyingi darsda Python buyruqlarini chuqurroq o‘rganamiz.</footer>
+</body>
+</html>

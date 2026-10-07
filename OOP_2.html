@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OOP 2 | Dunder, JSON va chuqurlashtirilgan Python OOP</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7fc;color:#203049;font:17px/1.75 "Segoe UI",Arial,sans-serif}.wrap{width:min(1060px,calc(100% - 36px));margin:auto}header{background:linear-gradient(125deg,#17264c,#644b9e);color:white;padding:64px 0}h1{font-size:clamp(2rem,5vw,3.7rem);line-height:1.15}header p{max-width:780px;color:#e5e4ff}section,nav{background:white;padding:28px;border:1px solid #e0e5ef;border-radius:16px;margin:22px 0}h2{color:#493480;line-height:1.35}h3{color:#325b84}nav a{display:inline-block;margin:5px 14px 5px 0}a{color:#4f419a}code{font-family:Consolas,monospace;background:#f3edf6;color:#9a2655;padding:2px 5px}pre{background:#192940;color:#e9f5ff;padding:20px;border-radius:10px;overflow:auto;font:15px/1.65 Consolas,monospace}.note{background:#eaf6f3;border-left:4px solid #2e9d82;padding:16px}.warn{background:#fff4dc;border-left:4px solid #d69c39;padding:16px}.table{overflow-x:auto}table{width:100%;border-collapse:collapse}td,th{border:1px solid #dce3ef;padding:11px;text-align:left;vertical-align:top}th{background:#4c4582;color:white}details{background:#f1f3fc;padding:15px;margin:12px 0;border-radius:10px}summary{cursor:pointer;font-weight:700}footer{text-align:center;padding:30px;color:#687995}li{margin:8px 0}@media(max-width:600px){section,nav{padding:18px}}@media print{pre{white-space:pre-wrap;background:#eee;color:black}header{background:white;color:black}header p{color:black}}
+</style></head><body>
+<header><div class="wrap"><p>PYTHON BACKEND · OOP DAVOMI · PYTHON 3.11+</p><h1>Dunder metodlar, JSON va OOPning keyingi bosqichi</h1><p>Oldingi class/object va to‘rtta tamoyil darslarining davomi. Bu qo‘llanma kundalik OOP ko‘nikmalarini batafsil, ilg‘or mexanizmlarni esa kirish darajasida yoritadi.</p></div></header>
+<main class="wrap">
+<nav aria-label="Mundarija"><strong>Dars xaritasi</strong><br><a href="#dunder">Dunder</a><a href="#methods">Method turlari</a><a href="#data">Dataclass</a><a href="#json">JSON</a><a href="#design">Dizayn</a><a href="#advanced">Ilg‘or mexanizmlar</a><a href="#practice">Mashqlar</a></nav>
+<section><h2>1. Oldingi bilimlarni aniqlashtirish</h2>
+<p><code>__init__</code> odatda “konstruktor” deyiladi, ammo texnik jihatdan tayyor obyektni boshlang‘ich holatga keltiradi. Obyektni yaratish vazifasi <code>__new__</code>ga tegishli. Ko‘p loyihalarda <code>__new__</code>ni qayta yozish talab qilinmaydi.</p>
+<p>Class ham obyekt: <code>type(MyClass)</code> odatda <code>type</code> bo‘ladi. <code>obj = MyClass(...)</code> instance yaratadi, <code>other = obj</code> esa nusxa yaratmasdan shu obyektga yana bir havola beradi.</p>
+<pre data-python>class User:
+    def __init__(self, name):
+        self.name = name
+
+a = User("Ali")
+b = a
+c = User("Ali")
+print(a is b)  # True: bitta obyekt
+print(a is c)  # False: boshqa obyekt
+print(a == c)  # False: User qiymat tengligini hali belgilamagan</pre>
+</section>
+<section id="dunder"><h2>2. Dunder metod nima?</h2>
+<p>“Double underscore” — ikki pastki chiziq: <code>__len__</code>, <code>__str__</code>. Python odatiy amallarni bajarishda shu maxsus metodlarni chaqiradi. Ularni odatda classda belgilab, tashqarida <code>len(obj)</code> kabi tabiiy sintaksisdan foydalanamiz.</p>
+<div class="table"><table><tr><th>Amal</th><th>Asosiy metodlar</th></tr><tr><td>Yaratish / boshlang‘ich holat</td><td>__new__, __init__</td></tr><tr><td>Matn ko‘rinishi</td><td>__str__, __repr__, __format__</td></tr><tr><td>Taqqoslash</td><td>__eq__, __lt__, __le__, __gt__, __ge__, __ne__</td></tr><tr><td>Arifmetika</td><td>__add__, __sub__, __mul__, __truediv__, __radd__, __iadd__</td></tr><tr><td>Kolleksiya</td><td>__len__, __getitem__, __setitem__, __delitem__, __contains__</td></tr><tr><td>Takrorlash / mantiq</td><td>__iter__, __next__, __bool__</td></tr><tr><td>Chaqirish / with</td><td>__call__, __enter__, __exit__</td></tr><tr><td>Hash / attributelar</td><td>__hash__, __getattr__, __getattribute__, __setattr__</td></tr></table></div>
+<p>Har classga hammasini yozish shart emas. Obyektning ma’nosiga mos amallarni tanlang.</p>
+</section>
+<section><h2>3. __str__ va __repr__</h2>
+<pre data-python>class Product:
+    def __init__(self, name, price):
+        self.name = name
+        self.price = price
+
+    def __str__(self):
+        return f"{self.name}: {self.price} so‘m"
+
+    def __repr__(self):
+        return f"Product(name={self.name!r}, price={self.price!r})"
+
+p = Product("Kitob", 50000)
+print(p)        # Kitob: 50000 so‘m
+print(repr(p))  # Product(name='Kitob', price=50000)
+print([p])      # [Product(name='Kitob', price=50000)]</pre>
+<p><code>str</code> foydalanuvchi uchun, <code>repr</code> dasturchi uchun qulay tavsif beradi. Ikkalasi ham string qaytarishi kerak. <code>!r</code> f-stringda qiymatning repr ko‘rinishini oladi. Maxfiy token/parollarni ushbu metodlarga kiritmang.</p>
+</section>
+<section><h2>4. Operator, NotImplemented va hash</h2>
+<pre data-python>class Vector:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+
+    def __add__(self, other):
+        if not isinstance(other, Vector):
+            return NotImplemented
+        return Vector(self.x + other.x, self.y + other.y)
+
+    def __eq__(self, other):
+        if not isinstance(other, Vector):
+            return NotImplemented
+        return (self.x, self.y) == (other.x, other.y)
+
+    def __repr__(self):
+        return f"Vector({self.x}, {self.y})"
+
+print(Vector(1, 2) + Vector(3, 4))  # Vector(4, 6)
+print(Vector(1, 2) == Vector(1, 2)) # True</pre>
+<p><code>NotImplemented</code> — mos bo‘lmagan operand uchun Pythonning boshqa mexanizmni sinashiga imkon beruvchi qiymat. U <code>NotImplementedError</code> exceptionidan farq qiladi. <code>a + b</code>da zarur bo‘lsa o‘ng operandning <code>__radd__</code>i tekshiriladi; <code>+=</code> uchun <code>__iadd__</code> mavjud.</p>
+<p><code>__eq__</code> yozilib, <code>__hash__</code> yozilmasa, instance odatda hashable bo‘lmaydi. Teng obyektlar bir xil hash berishi, hashga ta’sir qiladigan holat esa o‘zgarmas bo‘lishi kerak. Mutable narx yoki balans asosida hash tuzmang.</p>
+</section>
+<section><h2>5. Kolleksiya va iterator protokoli</h2>
+<pre data-python>class Cart:
+    def __init__(self, items):
+        self._items = list(items)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __getitem__(self, index):
+        return self._items[index]
+
+    def __contains__(self, item):
+        return item in self._items
+
+    def __iter__(self):
+        return iter(self._items)
+
+cart = Cart(["kitob", "ruchka"])
+print(len(cart))          # 2
+print(cart[0])            # kitob
+print(cart[:1])           # ['kitob']
+print("kitob" in cart)    # True
+print(bool(Cart([])))     # False: __bool__ yo‘q, __len__ ishlaydi
+print(list(cart))         # ['kitob', 'ruchka']</pre>
+<p>Iterable <code>__iter__</code>dan iterator qaytaradi. Iteratorning <code>__next__</code>i navbatdagi qiymatni, tugaganda <code>StopIteration</code>ni beradi. Quyidagi <code>yield</code> asosidagi metod generator yaratib shu protokolni o‘zi bajaradi:</p>
+<pre data-python>class Countdown:
+    def __init__(self, start):
+        self.start = start
+
+    def __iter__(self):
+        for number in range(self.start, 0, -1):
+            yield number
+
+print(list(Countdown(3)))  # [3, 2, 1]</pre>
+<p>Kolleksiyada har safar yangi iterator qaytarish uni qayta aylanishga imkon beradi. Obyekt o‘zini iterator sifatida qaytarsa, uning ichki pozitsiyasi tugashi mumkin.</p>
+</section>
+<section><h2>6. __call__: obyektni funksiya kabi chaqirish</h2>
+<pre data-python>class MinimumLength:
+    def __init__(self, minimum):
+        self.minimum = minimum
+
+    def __call__(self, text):
+        return len(text) >= self.minimum
+
+valid = MinimumLength(3)
+print(valid("hi"))     # False
+print(valid("salom"))  # True</pre>
+<p>Bu sozlanadigan validator, callback yoki strategiya uchun qulay. Oddiy stateless hisob uchun funksiya yetarli.</p>
+</section>
+<section><h2>7. Context manager va resurs hayoti</h2>
+<pre data-python>class Session:
+    def __enter__(self):
+        print("Resurs ochildi")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        print("Resurs yopildi")
+        return False  # exceptionni yashirmaslik
+
+with Session():
+    print("Ish bajarildi")
+# Resurs ochildi
+# Ish bajarildi
+# Resurs yopildi</pre>
+<p><code>__enter__</code> qaytargan qiymat <code>with ... as value</code>ga beriladi. <code>__exit__</code> True qaytarsa exception bostiriladi. <code>__enter__</code>ning o‘zi xato bersa, shu obyektning <code>__exit__</code>i chaqirilmaydi: qisman ochilgan resursni tozalashni hisobga oling.</p>
+<p><code>del obj</code> havolani olib tashlaydi; obyekt darhol yo‘q qilinishiga kafolat yo‘q. <code>__del__</code>ga tayanib fayl yoki DB ulanishini yopmang. <code>with</code> va explicit <code>close()</code> aniqroq boshqaruv beradi.</p>
+</section>
+<section id="methods"><h2>8. Instance, class va static methodlar</h2>
+<pre data-python>class User:
+    def __init__(self, name):
+        self.name = name
+
+    def greet(self):  # instance holati
+        return f"Salom, {self.name}"
+
+    @classmethod
+    def from_dict(cls, data):  # muqobil yaratish usuli
+        return cls(data["name"])
+
+    @staticmethod
+    def is_valid_name(name):  # self ham, cls ham yo‘q
+        return isinstance(name, str) and bool(name.strip())
+
+u = User.from_dict({"name": "Ali"})
+print(u.greet())                  # Salom, Ali
+print(User.is_valid_name("  "))   # False</pre>
+<p><code>self</code> instance, <code>cls</code> classning o‘zi. <code>classmethod</code> ichida <code>cls(...)</code> ishlatish child classlarda ham mos instance yaratadi. <code>staticmethod</code> class mavzusiga tegishli yordamchi funksiyaga mos; modul funksiyasi ham yaxshi variant.</p>
+</section>
+<section><h2>9. Nusxa olish: assignment, copy, deepcopy</h2>
+<pre data-python>from copy import copy, deepcopy
+
+class Group:
+    def __init__(self):
+        self.names = ["Ali"]
+
+a = Group()
+alias = a
+shallow = copy(a)
+deep = deepcopy(a)
+a.names.append("Lola")
+print(alias is a)           # True
+print(shallow.names)       # ['Ali', 'Lola']
+print(deep.names)          # ['Ali']</pre>
+<p>Yuzaki nusxa tashqi obyektni ajratadi, nested obyektlar umumiy qoladi. Deepcopy rekursiv nusxa qiladi, ammo database ulanishi, lock, socket kabi resurslar uchun universal yechim emas. Zarur bo‘lsa <code>__copy__</code>/<code>__deepcopy__</code> bilan xulq belgilanadi.</p>
+</section>
+<section id="data"><h2>10. Dataclass: ma’lumot obyektlarini ixcham yozish</h2>
+<pre data-python>from dataclasses import dataclass, field, asdict, replace
+
+@dataclass
+class User:
+    name: str
+    skills: list[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.name.strip():
+            raise ValueError("Ism bo‘sh bo‘lmasin")
+
+a = User("Ali")
+b = replace(a, name="Lola")
+print(a)         # User(name='Ali', skills=[])
+print(asdict(a)) # {'name': 'Ali', 'skills': []}
+print(b.name)    # Lola</pre>
+<p>Dataclass <code>__init__</code>, <code>__repr__</code> va qiymat tengligini generatsiya qiladi. <code>__post_init__</code> boshlang‘ich tekshiruvga mos. Type hintlar avtomatik runtime validatsiya bermaydi. <code>replace()</code> ham har nested qiymatni deep copy qilmaydi.</p>
+<p><code>frozen=True</code> attribute qayta berilishini cheklaydi, nested listni muzlatmaydi. <code>slots=True</code> instance tuzilishini ixchamlashtiradi. <code>kw_only=True</code> parametrlarni nom bilan berishni talab qiladi; <code>order=True</code> taqqoslash metodlarini yaratadi.</p>
+<pre data-python>from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ProductKey:
+    sku: str
+    currency: str
+
+stock = {ProductKey("BOOK", "UZS"): 5}
+print(stock[ProductKey("BOOK", "UZS")])  # 5</pre>
+<p><code>asdict()</code> nested dataclasslarni dictga aylantiradi, lekin datetime/Decimal kabi qiymatlarni avtomatik JSON string qilmaydi.</p>
+</section>
+<section id="json"><h2>11. Classni JSONga saqlash nimani anglatadi?</h2>
+<p>JSONga class kodi yoki methodlar emas, <strong>instance holati</strong> saqlanadi. Qayta o‘qiganda shu holatdan yangi instance yaratiladi. JSON string, son, bool, null, array va string kalitli objectni biladi.</p>
+<div class="table"><table><tr><th>Python qiymat</th><th>JSON uchun tanlangan ko‘rinish</th></tr><tr><td>Custom object</td><td>Ruxsat etilgan maydonlar dicti</td></tr><tr><td>datetime</td><td>Timezone bilan ISO 8601 string</td></tr><tr><td>Decimal</td><td>Aniqlikni saqlovchi string</td></tr><tr><td>Enum</td><td>member.value</td></tr><tr><td>set / tuple</td><td>Array; asl tur qayta tiklashda belgilanadi</td></tr></table></div>
+<p><code>json.dumps(obj)</code> odatiy instance uchun TypeError beradi. <code>obj.__dict__</code>ni to‘liq yozish o‘rniga explicit <code>to_dict()</code> va <code>from_dict()</code> ishlating: private ma’lumotlar chiqmasin, nested turlar aniq boshqarilsin.</p>
+</section>
+<section><h2>12. To‘liq loyiha: obyekt → JSON fayl → obyekt</h2>
+<p>Quyidagi mustaqil kod vaqtinchalik papkada JSON yaratadi, o‘qiydi va tozalaydi. Real doimiy saqlashda <code>path</code>ni loyiha data papkasiga yo‘naltiring. Misol Python standart kutubxonasi bilan ishlaydi.</p>
+<pre data-python id="json-project">import json
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
+from enum import Enum
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+class Status(Enum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+@dataclass
+class Product:
+    name: str
+    price: Decimal
+    created_at: datetime
+    status: Status = Status.ACTIVE
+
+    def __post_init__(self):
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("name bo‘sh bo‘lmagan matn bo‘lsin")
+        if not isinstance(self.price, Decimal):
+            raise TypeError("price Decimal bo‘lsin")
+        if not self.price.is_finite() or self.price &lt; 0:
+            raise ValueError("price chekli, manfiy bo‘lmagan son bo‘lsin")
+        if not isinstance(self.created_at, datetime):
+            raise TypeError("created_at datetime bo‘lsin")
+        if self.created_at.utcoffset() is None:
+            raise ValueError("Vaqt zonasi kerak")
+        if not isinstance(self.status, Status):
+            raise TypeError("status Status bo‘lsin")
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "price": str(self.price),
+            "created_at": self.created_at.isoformat(),
+            "status": self.status.value,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        if not isinstance(data, dict):
+            raise ValueError("Mahsulot object bo‘lsin")
+        expected = {"name", "price", "created_at", "status"}
+        if set(data) != expected:
+            raise ValueError("Maydonlar noto‘g‘ri")
+        if not all(isinstance(data[key], str) for key in expected):
+            raise ValueError("Saqlangan maydonlar string bo‘lsin")
+        try:
+            price = Decimal(data["price"])
+            date = datetime.fromisoformat(data["created_at"])
+            status = Status(data["status"])
+        except (ValueError, InvalidOperation) as exc:
+            raise ValueError("Mahsulot formati noto‘g‘ri") from exc
+        return cls(data["name"], price, date, status)
+
+def save_products(path, products):
+    payload = {
+        "schema_version": 1,
+        "products": [product.to_dict() for product in products],
+    }
+    # "w" mavjud faylni almashtiradi.
+    with path.open("w", encoding="utf-8") as file:
+        json.dump(payload, file, ensure_ascii=False,
+                  indent=2, allow_nan=False)
+
+def load_products(path):
+    with path.open(encoding="utf-8") as file:
+        payload = json.load(file)
+    if not isinstance(payload, dict):
+        raise ValueError("Ildiz JSON object bo‘lsin")
+    if set(payload) != {"schema_version", "products"}:
+        raise ValueError("Fayl maydonlari noto‘g‘ri")
+    if type(payload["schema_version"]) is not int or payload["schema_version"] != 1:
+        raise ValueError("Schema versiyasi qo‘llanmaydi")
+    if not isinstance(payload["products"], list):
+        raise ValueError("products ro‘yxat bo‘lsin")
+    return [Product.from_dict(item) for item in payload["products"]]
+
+def main():
+    original = Product(
+        "Kitob", Decimal("25.50"),
+        datetime(2026, 10, 1, 10, 0, tzinfo=timezone.utc),
+    )
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "products.json"
+        save_products(path, [original])
+        restored = load_products(path)[0]
+        print(restored == original)       # True
+        print(restored is original)       # False
+        print(type(restored).__name__)   # Product
+        print(restored.price)             # 25.50
+        print(restored.status.value)      # active
+
+if __name__ == "__main__":
+    main()</pre>
+<p><code>json.load()</code> dict/list qaytaradi; <code>from_dict()</code>gina uni Productga tiklaydi. Buzilgan JSON <code>JSONDecodeError</code>, mavjud bo‘lmagan fayl <code>FileNotFoundError</code>, noto‘g‘ri schema <code>ValueError</code> beradi. Chaqiruvchi qatlam bu xatolarni aniq boshqarsin; buzilgan fayl o‘rniga avtomatik bo‘sh ro‘yxat yozib yubormang.</p>
+<p>Fayl formati o‘zgarsa <code>schema_version</code>ni oshirib, eski formatni ko‘chirish qoidasi yoziladi. JSON obyektlar identifikatsiyasini, umumiy havolalarni yoki siklik bog‘lanishlarni saqlamaydi. Katta va bir nechta worker yozadigan backend uchun database va transaction kerak.</p>
+</section>
+<section><h2>13. JSONEncoder, Pydantic va pickle</h2>
+<p>Maxsus encoder <code>json.dumps(data, default=encode)</code> orqali ulanganda tanilmagan qiymatni JSONga mos ko‘rinishga aylantiradi. Decoder obyektni avtomatik tiklamaydi — tiklash qoidasi alohida kerak.</p>
+<pre data-python>import json
+from decimal import Decimal
+
+def encode(value):
+    if isinstance(value, Decimal):
+        return str(value)
+    raise TypeError(f"Qo‘llanmaydigan tur: {type(value).__name__}")
+
+text = json.dumps({"price": Decimal("12.50")}, default=encode)
+print(text)  # {"price": "12.50"}</pre>
+<p>Shu mantiqni <code>json.JSONEncoder</code> subclassining <code>default()</code> metodida ham yozish mumkin. <code>default=str</code> hamma noma’lum turni matnga yashirib yuboradi; bu noto‘g‘ri formatni sezishni qiyinlashtiradi.</p>
+<p><a href="lesson_18.html">Pydantic darsida</a> ko‘rsatilganidek, model uchun <code>model_dump_json()</code> va <code>Model.model_validate_json()</code> qo‘llanadi. Oddiy class, dataclass va Pydantic model bir xil emas. <code>pickle</code> Python obyektlariga xos format, ammo ishonchsiz pickle faylini yuklash kod bajarilishiga olib kelishi mumkin; tashqi API/fayl almashishda JSON va aniq schema qulay.</p>
+</section>
+<section id="design"><h2>14. Composition va dependency injection</h2>
+<p>Order service ichida email yuboruvchi obyekt bo‘lishi — “has-a” aloqasi. Servicega ushbu obyektni tashqaridan berish dependency injection deyiladi. Testda haqiqiy tarmoq o‘rniga soxta yuboruvchini berish mumkin.</p>
+<pre data-python>class ConsoleSender:
+    def send(self, text):
+        print(text)
+
+class OrderService:
+    def __init__(self, sender):
+        self.sender = sender
+
+    def confirm(self, order_id):
+        self.sender.send(f"Buyurtma {order_id} tasdiqlandi")
+
+service = OrderService(ConsoleSender())
+service.confirm(7)  # Buyurtma 7 tasdiqlandi</pre>
+<p>Class boshqa classning turi bo‘lsa inheritance, uning xizmatidan foydalansa composition mos keladi. Aggregationda obyektlar mustaqil hayotga ega bo‘lishi mumkin; compositionda egasi ularning hayotini boshqarishi ko‘zda tutiladi. Python bu egalikni majburan cheklamaydi.</p>
+</section>
+<section><h2>15. Protocol, ABC va type hint</h2>
+<pre data-python>from typing import Protocol
+
+class Sender(Protocol):
+    def send(self, text: str) -&gt; None: ...
+
+class ConsoleSender:
+    def send(self, text: str) -&gt; None:
+        print(text)
+
+def notify(sender: Sender) -&gt; None:
+    sender.send("Salom")
+
+notify(ConsoleSender())  # Salom</pre>
+<p>Protocol strukturani tavsiflaydi: explicit meros olish shart emas. U asosan static type checker uchun; Python runtime’da argument turini avtomatik tekshirmaydi. <code>@runtime_checkable</code> mavjud a’zolarni sodda tekshiradi, signatura va type hintlarni to‘liq tekshirmaydi. ABC abstract metodlarni implement qilish talabini runtime instantiationda qo‘yadi.</p>
+</section>
+<section><h2>16. MRO, super va mixin</h2>
+<pre data-python>class Base:
+    def label(self):
+        return ["Base"]
+
+class AuditMixin(Base):
+    def label(self):
+        return ["Audit"] + super().label()
+
+class Service(Base):
+    def label(self):
+        return ["Service"] + super().label()
+
+class App(AuditMixin, Service):
+    pass
+
+print(App().label())  # ['Audit', 'Service', 'Base']
+print([c.__name__ for c in App.__mro__])
+# ['App', 'AuditMixin', 'Service', 'Base', 'object']</pre>
+<p><code>super()</code> doim “to‘g‘ridan-to‘g‘ri parent” emas, MROdagi keyingi implementatsiyaga o‘tadi. Cooperative multiple inheritance uchun signaturalar mos, super chaqiruvlari izchil bo‘lsin. Mixin kichik qo‘shimcha imkoniyat bersin; bir-biriga zid murakkab holatni yashirmasin.</p>
+</section>
+<section id="advanced"><h2>17. __slots__, attributelar va descriptor</h2>
+<p><code>__slots__ = ("name", "age")</code> instance maydonlarini oldindan belgilab, ko‘pincha <code>__dict__</code>ni olib tashlaydi. Bu ko‘p obyektlarda xotirani tejashi mumkin; private himoya yoki immutablelik emas. Meros olishda parentning <code>__dict__</code>i bo‘lsa natija farq qiladi.</p>
+<p><code>getattr(obj, "name", default)</code>, <code>setattr</code>, <code>hasattr</code> dinamik attribute ishlatish uchun. <code>__getattr__</code> oddiy qidiruv muvaffaqiyatsiz bo‘lganda, <code>__getattribute__</code> esa har kirishda ishlaydi. Ikkinchisini noto‘g‘ri yozish rekursiyaga olib keladi.</p>
+<h3>Descriptor: qayta ishlatiladigan propertyga o‘xshash qoida</h3>
+<pre data-python>class Positive:
+    def __set_name__(self, owner, name):
+        self.storage_name = "_" + name
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            return self
+        return getattr(instance, self.storage_name)
+
+    def __set__(self, instance, value):
+        if type(value) is not int or value &lt;= 0:
+            raise ValueError("Musbat int kerak")
+        setattr(instance, self.storage_name, value)
+
+class Stock:
+    quantity = Positive()
+
+    def __init__(self, quantity):
+        self.quantity = quantity
+
+stock = Stock(5)
+print(stock.quantity)  # 5
+# stock.quantity = 0  # ValueError</pre>
+<p>Descriptorlar <code>__get__</code>, <code>__set__</code>, <code>__delete__</code> orqali attribute kirishini boshqaradi. Property va method binding ham shu mexanizmlar bilan bog‘liq. Oddiy bitta attribute uchun propertydan boshlash osonroq.</p>
+</section>
+<section><h2>18. Class lifecycle: __init_subclass__ va metaclass</h2>
+<pre data-python>class Plugin:
+    registry = {}
+
+    def __init_subclass__(cls, *, key, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if key in Plugin.registry:
+            raise ValueError("Plugin kaliti takror")
+        Plugin.registry[key] = cls
+
+class CsvPlugin(Plugin, key="csv"):
+    pass
+
+print(Plugin.registry["csv"] is CsvPlugin)  # True</pre>
+<p><code>__init_subclass__</code> child class ta’riflanganda ishlaydi; registratsiya va class qoidalariga mos. Metaclass classning o‘zini yaratish mexanizmini boshqaradi: odatda <code>type</code>. Ko‘p vazifani class decorator yoki <code>__init_subclass__</code> bilan bajarish mumkin; metaclass framework dizayni darajasida kerak bo‘ladi.</p>
+</section>
+<section><h2>19. Generic, async va qolgan protokollar</h2>
+<div class="table"><table><tr><th>Mavzu</th><th>Qachon kerak?</th></tr>
+<tr><td>Generic[T]</td><td>Turini saqlovchi Repository, Page, Result kabi qayta ishlatiladigan classlar; runtime validator emas.</td></tr>
+<tr><td>__aenter__ / __aexit__</td><td>async with orqali asinxron resurs hayoti.</td></tr>
+<tr><td>__aiter__ / __anext__</td><td>async for ma’lumot oqimi; tugaganda StopAsyncIteration.</td></tr>
+<tr><td>__format__</td><td>f-string format spetsifikatori bilan maxsus ko‘rinish.</td></tr>
+<tr><td>__match_args__</td><td>match/case positional class patternlari.</td></tr>
+<tr><td>weakref</td><td>Obyektni tirik ushlab turmaydigan havola; cache/observerlarda.</td></tr>
+<tr><td>__getstate__ / __setstate__</td><td>Pickle holatini moslashtirish; JSON metodlari emas.</td></tr>
+<tr><td>__class_getitem__</td><td>Class[T] kabi parametrli tip mexanizmi; ko‘pincha typing vositalari yetarli.</td></tr></table></div>
+<p>Bularning hammasini bir loyihaga qo‘shish talab qilinmaydi. Ish vazifasi paydo bo‘lganda tegishli protokolni alohida chuqurlashtiring.</p>
+</section>
+<section><h2>20. OOP dizayni va testlash</h2>
+<p><strong>SOLID yo‘nalishi:</strong> classning vazifasi aniq bo‘lsin (S); yangi behavior qo‘shish oson bo‘lsin (O); child parent shartnomasini buzmasin (L); interfeyslar kerakli darajada kichik bo‘lsin (I); yuqori darajadagi kod konkret xizmatdan ko‘ra shartnomaga bog‘lansin (D).</p>
+<p>Repository saqlash/o‘qish, Service biznes qoidasi, DTO ma’lumot tashish vazifasini bajaradi. Bu qatlamlarni faqat loyiha ehtiyoji bo‘lganda kiriting. Har narsani classga aylantirish shart emas.</p>
+<p>JSON loyihasini testlash: round-trip qiymatlar tengligini, yangi instance ekanini, noto‘g‘ri price/status/schema rad etilishini tekshiring. Dependency injection bilan email yoki database o‘rniga oddiy fake obyekt ishlating.</p>
+</section>
+<section id="practice"><h2>21. Mustaqil mashqlar va javoblar</h2>
+<ol><li><code>Book</code> dataclass: title, author, published_at. to_dict/from_dict yozing.</li><li><code>Library</code> classiga len(), iter(), index orqali kitob olishni qo‘shing.</li><li>Libraryni JSONga saqlang va qayta yuklang. Sana datetimega qaytsin.</li><li>Noto‘g‘ri JSON, noma’lum schema_version va bo‘sh title uchun xato chiqaring.</li><li>JSONRepositoryni servicega parametr sifatida bering; testda MemoryRepository almashtirsin.</li></ol>
+<details><summary>__init__ obyektni yaratadimi?</summary><p>Obyektni __new__ yaratadi; __init__ boshlang‘ich holat beradi va None qaytaradi.</p></details>
+<details><summary>JSONdan o‘qilgan dict avtomatik classga aylanadimi?</summary><p>Yo‘q. Aniq from_dict yoki Pydantic model validatsiyasi kerak. Class implementatsiyasi dasturda mavjud bo‘lishi lozim.</p></details>
+<details><summary>Dataclass type hintlari noto‘g‘ri turni rad etadimi?</summary><p>O‘z-o‘zidan yo‘q. Qo‘lda tekshiruv yoki Pydantic kabi validatsiya vositasi kerak.</p></details>
+<details><summary>NotImplemented va NotImplementedError farqi?</summary><p>Birinchisi operand amalini qo‘llamaslik signali sifatida qaytariladi; ikkinchisi exception bo‘lib raise qilinadi.</p></details>
+</section>
+<section><h2>Rasmiy manbalar va keyingi o‘qish</h2>
+<ul><li><a href="https://docs.python.org/3/reference/datamodel.html">Python data model: maxsus metodlar</a></li>
+<li><a href="https://docs.python.org/3/library/dataclasses.html">Dataclasses</a></li>
+<li><a href="https://docs.python.org/3/library/json.html">JSON encoding va decoding</a></li>
+<li><a href="https://docs.python.org/3/howto/descriptor.html">Descriptor HOWTO</a></li>
+<li><a href="https://docs.python.org/3/library/typing.html">Typing va Protocol</a></li>
+<li><a href="https://docs.python.org/3/library/copy.html">Nusxa olish</a></li></ul>
+</section></main>
+<footer><a href="OOP_1.html">← OOPga kirish</a> · <a href="lesson_18.html">Pydantic va Enum →</a></footer></body></html>
